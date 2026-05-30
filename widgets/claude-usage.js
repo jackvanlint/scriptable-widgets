@@ -48,8 +48,8 @@ function drawBar(parent, label, frac) {
 
 function fmtTokens(n) {
   if (!n || n < 0) return null;
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M tokens`;
-  if (n >= 1_000) return `${Math.round(n / 1_000)}k tokens`;
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M tokens`;
+  if (n >= 1000) return `${Math.round(n / 1000)}k tokens`;
   return `${n} tokens`;
 }
 
