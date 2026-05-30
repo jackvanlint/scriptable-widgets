@@ -20,17 +20,12 @@ function barColor(frac) {
   return C.green;
 }
 
-// Bar renders at 600px internally; imageSize scales it to display width
-const screenW = Device.screenSize().width;
-const BAR_W = Math.round(screenW - 52 - 32 - 46); // system margins + widget padding + pct text
-const BAR_H = 8;
-
 function makeBar(frac, color) {
-  const W = 600, H = 40, R = 8;
+  const W = 245, H = 8, R = 3;
   const ctx = new DrawContext();
   ctx.size = new Size(W, H);
   ctx.opaque = false;
-  ctx.respectScreenScale = false;
+  ctx.respectScreenScale = true;
 
   const track = new Path();
   track.addRoundedRect(new Rect(0, 0, W, H), R, R);
@@ -80,7 +75,7 @@ function addBar(parent, label, frac) {
   row.centerAlignContent();
 
   const bar = row.addImage(makeBar(Math.max(0, frac), color));
-  bar.imageSize = new Size(BAR_W, BAR_H);
+  bar.resizable = false;
 
   row.addSpacer(8);
 
@@ -116,7 +111,7 @@ if (plan) {
   badgeTxt.textColor = C.dim;
 }
 
-w.addSpacer();
+w.addSpacer(10);
 
 if (!data || data.error) {
   const msg = w.addText(data && data.error ? data.error : "Desktop unreachable");
@@ -141,6 +136,7 @@ if (!data || data.error) {
   }
 }
 
+w.addSpacer();
 Script.setWidget(w);
 Script.complete();
 w.presentMedium();
