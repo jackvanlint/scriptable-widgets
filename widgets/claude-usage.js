@@ -20,12 +20,17 @@ function barColor(frac) {
   return C.green;
 }
 
+const BAR_W = 248;
+const BAR_H = 8;
+
 function makeBar(frac, color) {
-  const W = 245, H = 8, R = 3;
+  // Draw at 3x resolution, displayed at exact BAR_W × BAR_H pt via imageSize
+  const SCALE = 3;
+  const W = BAR_W * SCALE, H = BAR_H * SCALE, R = 9;
   const ctx = new DrawContext();
   ctx.size = new Size(W, H);
   ctx.opaque = false;
-  ctx.respectScreenScale = true;
+  ctx.respectScreenScale = false;
 
   const track = new Path();
   track.addRoundedRect(new Rect(0, 0, W, H), R, R);
@@ -75,7 +80,7 @@ function addBar(parent, label, frac) {
   row.centerAlignContent();
 
   const bar = row.addImage(makeBar(Math.max(0, frac), color));
-  bar.resizable = false;
+  bar.imageSize = new Size(BAR_W, BAR_H);
 
   row.addSpacer(8);
 
