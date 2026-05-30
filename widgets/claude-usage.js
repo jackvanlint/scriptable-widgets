@@ -11,7 +11,6 @@ const C = {
   green:  new Color("#7A9E7A"),
   amber:  new Color("#C8A040"),
   red:    new Color("#9E5A5A"),
-  plan:   new Color("#2C2416"),
   track:  new Color("#2C2416"),
 };
 
@@ -107,11 +106,7 @@ title.textColor = C.dim;
 header.addSpacer();
 const plan = data && !data.error ? fmtPlan(data.plan_type) : null;
 if (plan) {
-  const badge = header.addStack();
-  badge.backgroundColor = C.plan;
-  badge.cornerRadius = 4;
-  badge.setPadding(2, 7, 2, 7);
-  const badgeTxt = badge.addText(plan);
+  const badgeTxt = header.addText(plan);
   badgeTxt.font = Font.boldSystemFont(9);
   badgeTxt.textColor = C.dim;
 }
