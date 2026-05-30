@@ -5,13 +5,14 @@
 const BRIDGE = "http://100.118.247.69:9753/usage";
 
 const C = {
-  bg:    new Color("#1A1610"),
-  text:  new Color("#D4B896"),
-  dim:   new Color("#6B5540"),
-  green: new Color("#7A9E7A"),
-  amber: new Color("#C8A040"),
-  red:   new Color("#9E5A5A"),
-  plan:  new Color("#2C2416"),
+  bg:     new Color("#1A1610"),
+  dim:    new Color("#6B5540"),
+  dimmer: new Color("#3A2E22"),
+  green:  new Color("#7A9E7A"),
+  amber:  new Color("#C8A040"),
+  red:    new Color("#9E5A5A"),
+  plan:   new Color("#2C2416"),
+  track:  new Color("#2C2416"),
 };
 
 function barColor(frac) {
@@ -20,37 +21,36 @@ function barColor(frac) {
   return C.green;
 }
 
-function drawBar(parent, label, frac) {
-  const row = parent.addStack();
-  row.layoutHorizontally();
-  row.centerAlignContent();
+function makeBar(frac, color) {
+  const W = 220, H = 5, R = 2;
+  const ctx = new DrawContext();
+  ctx.size = new Size(W, H);
+  ctx.opaque = false;
+  ctx.respectScreenScale = true;
 
-  const LEN = 14;
-  const filled = frac >= 0 ? Math.round(frac * LEN) : 0;
-  const barStr = "█".repeat(filled) + "░".repeat(LEN - filled);
-  const barTxt = row.addText(barStr);
-  barTxt.font = Font.monospacedSystemFont(9);
-  barTxt.textColor = frac >= 0 ? barColor(frac) : C.dim;
+  const track = new Path();
+  track.addRoundedRect(new Rect(0, 0, W, H), R, R);
+  ctx.addPath(track);
+  ctx.setFillColor(C.track);
+  ctx.fillPath();
 
-  row.addSpacer(6);
+  if (frac > 0) {
+    const fillW = Math.max(R * 2, Math.round(W * frac));
+    const fill = new Path();
+    fill.addRoundedRect(new Rect(0, 0, fillW, H), R, R);
+    ctx.addPath(fill);
+    ctx.setFillColor(color);
+    ctx.fillPath();
+  }
 
-  const pctStr = frac >= 0 ? `${Math.round(frac * 100)}%` : "—";
-  const pct = row.addText(pctStr.padStart(4));
-  pct.font = Font.monospacedSystemFont(9);
-  pct.textColor = frac >= 0 ? barColor(frac) : C.dim;
-
-  row.addSpacer(6);
-
-  const lbl = row.addText(label);
-  lbl.font = Font.boldSystemFont(8);
-  lbl.textColor = C.dim;
+  return ctx.getImage();
 }
 
 function fmtTokens(n) {
   if (!n || n < 0) return null;
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M tokens`;
-  if (n >= 1000) return `${Math.round(n / 1000)}k tokens`;
-  return `${n} tokens`;
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
+  if (n >= 1000) return Math.round(n / 1000) + "k";
+  return String(n);
 }
 
 function fmtPlan(s) {
@@ -59,6 +59,29 @@ function fmtPlan(s) {
   if (n.startsWith("max")) return "MAX";
   if (n === "pro") return "PRO";
   return n.toUpperCase();
+}
+
+function addBar(parent, label, frac) {
+  const color = frac >= 0 ? barColor(frac) : C.dimmer;
+  const pctStr = frac >= 0 ? Math.round(frac * 100) + "%" : "—";
+
+  const row = parent.addStack();
+  row.layoutHorizontally();
+  row.centerAlignContent();
+
+  const lbl = row.addText(label);
+  lbl.font = Font.boldSystemFont(9);
+  lbl.textColor = C.dim;
+  row.addSpacer();
+
+  const pct = row.addText(pctStr);
+  pct.font = Font.boldSystemFont(14);
+  pct.textColor = color;
+
+  parent.addSpacer(4);
+
+  const bar = parent.addImage(makeBar(Math.max(0, frac), color));
+  bar.resizable = false;
 }
 
 // Fetch
@@ -71,7 +94,7 @@ try {
 
 const w = new ListWidget();
 w.backgroundColor = C.bg;
-w.setPadding(14, 16, 12, 16);
+w.setPadding(14, 16, 14, 16);
 
 // Header
 const header = w.addStack();
@@ -87,22 +110,22 @@ if (plan) {
   badge.backgroundColor = C.plan;
   badge.cornerRadius = 4;
   badge.setPadding(2, 7, 2, 7);
-  const planTxt = badge.addText(plan);
-  planTxt.font = Font.boldSystemFont(9);
-  planTxt.textColor = C.dim;
+  const badgeTxt = badge.addText(plan);
+  badgeTxt.font = Font.boldSystemFont(9);
+  badgeTxt.textColor = C.dim;
 }
 
 w.addSpacer(10);
 
 if (!data || data.error) {
-  const msg = w.addText(data?.error ?? "Desktop unreachable");
+  const msg = w.addText(data && data.error ? data.error : "Desktop unreachable");
   msg.font = Font.systemFont(11);
   msg.textColor = C.dim;
   w.addSpacer();
 } else {
-  drawBar(w, "5 HR", data.pct_5h ?? -1);
-  w.addSpacer(7);
-  drawBar(w, "7 DAY", data.pct_7d ?? -1);
+  addBar(w, "5 HR", data.pct_5h != null ? data.pct_5h : -1);
+  w.addSpacer(9);
+  addBar(w, "7 DAY", data.pct_7d != null ? data.pct_7d : -1);
 
   const tok = fmtTokens(data.tokens_today);
   if (tok) {
@@ -110,15 +133,14 @@ if (!data || data.error) {
     const tokRow = w.addStack();
     tokRow.layoutHorizontally();
     tokRow.addSpacer();
-    const tokTxt = tokRow.addText(`${tok} today`);
+    const tokTxt = tokRow.addText(tok + " tokens today");
     tokTxt.font = Font.systemFont(10);
     tokTxt.textColor = C.dim;
     tokRow.addSpacer();
   }
-
-  w.addSpacer();
 }
 
+w.addSpacer();
 Script.setWidget(w);
 Script.complete();
 w.presentMedium();
