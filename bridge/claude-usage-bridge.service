@@ -1,0 +1,11 @@
+[Unit]
+Description=Claude Usage Bridge (Scriptable widget endpoint)
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/jack/.config/noctalia/plugins/claude-remote/claude-usage-bridge.py
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target
