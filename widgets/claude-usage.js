@@ -22,7 +22,7 @@ function barColor(frac) {
 }
 
 function makeBar(frac, color) {
-  const W = 220, H = 5, R = 2;
+  const W = 190, H = 8, R = 3;
   const ctx = new DrawContext();
   ctx.size = new Size(W, H);
   ctx.opaque = false;
@@ -65,23 +65,24 @@ function addBar(parent, label, frac) {
   const color = frac >= 0 ? barColor(frac) : C.dimmer;
   const pctStr = frac >= 0 ? Math.round(frac * 100) + "%" : "—";
 
+  const lbl = parent.addText(label);
+  lbl.font = Font.boldSystemFont(9);
+  lbl.textColor = C.dim;
+
+  parent.addSpacer(5);
+
   const row = parent.addStack();
   row.layoutHorizontally();
   row.centerAlignContent();
 
-  const lbl = row.addText(label);
-  lbl.font = Font.boldSystemFont(9);
-  lbl.textColor = C.dim;
-  row.addSpacer();
+  const bar = row.addImage(makeBar(Math.max(0, frac), color));
+  bar.resizable = false;
+
+  row.addSpacer(8);
 
   const pct = row.addText(pctStr);
   pct.font = Font.boldSystemFont(14);
   pct.textColor = color;
-
-  parent.addSpacer(4);
-
-  const bar = parent.addImage(makeBar(Math.max(0, frac), color));
-  bar.resizable = false;
 }
 
 // Fetch
